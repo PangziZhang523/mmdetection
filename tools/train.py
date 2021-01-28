@@ -20,8 +20,8 @@ from mmdet.utils import collect_env, get_root_logger
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
-    parser.add_argument('config', help='train config file path')
-    parser.add_argument('--work-dir', help='the dir to save logs and models')
+    parser.add_argument('--config',default='/data_raid5_21T/zgh/ZGh/mmdetection/configs/res2net/cascade_rcnn_r2_101_fpn_20e_coco.py', help='train config file path')
+    parser.add_argument('--work-dir', default='/data_raid5_21T/zgh/ZGh/work_dirs/cascade_r2_1', help='the dir to save logs and models')
     parser.add_argument(
         '--resume-from', help='the checkpoint file to resume from')
     parser.add_argument(
@@ -36,6 +36,7 @@ def parse_args():
         '(only applicable to non-distributed training)')
     group_gpus.add_argument(
         '--gpu-ids',
+        default=[2,3],
         type=int,
         nargs='+',
         help='ids of gpus to use '
