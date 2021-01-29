@@ -5,7 +5,7 @@ img_norm_cfg = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(2000, 1400), keep_ratio=True), #single-scale
+    dict(type='Resize', img_scale=[(2400, 1800),(2400, 2200)], keep_ratio=True), #single-scale
     # dict(type='Resize', img_scale=[(2000, 1000),(2000,1800)], keep_ratio=True), #multi-scale
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
@@ -18,7 +18,7 @@ test_pipeline = [
     dict(
         type='MultiScaleFlipAug',
         # img_scale=(1333, 800),
-        img_scale=(2000, 1400),
+        img_scale=(2400, 200),
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
@@ -31,7 +31,7 @@ test_pipeline = [
 ]
 data = dict(
     samples_per_gpu=1,
-    workers_per_gpu=0,
+    workers_per_gpu=2,
     train=dict(
         type=dataset_type,
         ann_file=data_root + 'instances_train2017_coco.json',

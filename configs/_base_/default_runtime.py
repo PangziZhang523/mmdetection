@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2021-01-27 08:45:44
-LastEditTime: 2021-01-27 15:53:36
+LastEditTime: 2021-01-28 15:01:33
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /mmdetection/configs/_base_/default_runtime.py
@@ -18,7 +18,7 @@ log_config = dict(
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 # load_from = None
-load_from = '/data_raid5_21T/zgh/ZGh/mmdetection/weights/cascade_rcnn_r2_101_fpn_20e_coco-f4b7b7db.pth'
+load_from = '/data_raid5_21T/zgh/ZGh/mmdetection/weights/num7/cascade_rcnn_r2_101_fpn_20e_coco_pretrained_weights_classes_7.pth'
 resume_from = None
 workflow = [('train', 1)]
 # work_dir = '/data_raid5_21T/zgh/ZGh/work_dirs/cascade_r2_1'
