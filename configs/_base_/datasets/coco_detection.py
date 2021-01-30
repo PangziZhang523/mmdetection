@@ -46,6 +46,6 @@ data = dict(
         type=dataset_type,
         ann_file=data_root + 'test_1_27.json',
         # img_prefix=data_root + 'val2017/',
-        img_prefix='/data_raid5_21T/zgh/ZGh/yolo/tile_round1_testA_20201231/testA_imgs',
+        img_prefix='/data/zhangguanghao/train_my_data/tile_round1_train_20201231/val/images',
         pipeline=test_pipeline))
 evaluation = dict(interval=1, metric='bbox')

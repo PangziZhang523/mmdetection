@@ -5,7 +5,7 @@ import argparse
 
 '''
 python3 tools/data_process/weight.py --org_path \
- /data_raid5_21T/zgh/ZGh/mmdetection/weights/cascade_rcnn_r2_101_fpn_20e_coco-f4b7b7db.pth \
+ /data/train_my/mmdetection/weights/cascade_rcnn_r2_101_fpn_20e_coco-f4b7b7db.pth \
 --num_classes 7
 '''
 
@@ -58,7 +58,7 @@ def modify_cascade_rcnn(model_coco, num_classes):
 
 
 def main(args):
-    save_dir = "/data_raid5_21T/zgh/ZGh/mmdetection/weights/num%s/" % args.num_classes
+    save_dir = "/data/train_my/mmdetection/weights/num%s/" % args.num_classes
     mkdir(save_dir)
     pth_dir = args.org_path
     model_coco = torch.load(pth_dir)

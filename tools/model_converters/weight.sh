@@ -7,4 +7,4 @@
  # @FilePath: /mmdetection/tools/train.sh
 ### 
 set -ex
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 ./dist_train.sh ../configs/cascade_rcnn/cascade_rcnn_r50_fpn_1x_coco.py 8 --no-validate
+python /data/train_my/mmdetection/tools/model_converters/weight.py --org_path /data/train_my/mmdetection/weights/cascade_rcnn_r50_fpn_1x_coco_20200316-3dc56deb.pth --num_classes 7 
