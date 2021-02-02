@@ -215,23 +215,39 @@ class CocoDataset(CustomDataset):
                 json_results.append(data)
         return json_results
 
+    # def _det2json(self, results):
+    #     """Convert detection results to COCO json style."""
+    #     json_results = []
+    #     for idx in range(len(self)):
+    #         img_id = self.img_ids[idx]
+    #         result = results[idx]
+    #         for label in range(len(result)):
+    #             bboxes = result[label]
+    #             for i in range(bboxes.shape[0]):
+    #                 data = dict()
+    #                 data['image_id'] = img_id
+    #                 data['bbox'] = self.xyxy2xywh(bboxes[i])
+    #                 data['score'] = float(bboxes[i][4])
+    #                 data['category_id'] = self.cat_ids[label]
+    #                 json_results.append(data)
+    #     return json_results
     def _det2json(self, results):
-        """Convert detection results to COCO json style."""
+        """Convert bbox detection results to COCO json style."""
         json_results = []
         for idx in range(len(self)):
-            img_id = self.img_ids[idx]
+            # img_id = self.img_ids[idx]
+            img_filename = self.data_infos[idx]['id']
             result = results[idx]
             for label in range(len(result)):
                 bboxes = result[label]
                 for i in range(bboxes.shape[0]):
                     data = dict()
-                    data['image_id'] = img_id
-                    data['bbox'] = self.xyxy2xywh(bboxes[i])
+                    data['name'] = img_filename
+                    data['category'] = self.cat_ids[label]
+                    data['bbox'] = bboxes[i]
                     data['score'] = float(bboxes[i][4])
-                    data['category_id'] = self.cat_ids[label]
                     json_results.append(data)
         return json_results
-
     def _segm2json(self, results):
         """Convert instance segmentation results to COCO json style."""
         bbox_json_results = []
