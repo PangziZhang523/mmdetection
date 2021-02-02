@@ -9,6 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 mmcv/
+core.*
 build/
 weights
 develop-eggs/
@@ -113,6 +114,7 @@ data
 
 # custom
 *.pkl
+*.json
 *.pkl.json
 *.log.json
 work_dirs/
