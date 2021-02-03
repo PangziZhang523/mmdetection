@@ -7,7 +7,8 @@ train_pipeline = [
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='Resize', img_scale=[(2000, 1400), (2000, 1800)], keep_ratio=True), #single-scale
     # dict(type='Resize', img_scale=[(2000, 1000),(2000,1800)], keep_ratio=True), #multi-scale
-    dict(type='RandomFlip', flip_ratio=0.5),
+    # dict(type='RandomFlip', flip_ratio=0.5),
+    dict(type='RandomFlip', flip_ratio=[0.3, 0.5], direction=['horizontal', 'vertical']),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
