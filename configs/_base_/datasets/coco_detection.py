@@ -15,17 +15,20 @@ train_pipeline = [
     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
     #dict(type='MixUp',p=0.5, lambd=0.5),
     #dict(type='BBoxJitter', min=0.9, max=1.1),
+    #dict(type='BBoxJitter', min=0.95, max=1.05),
+    #dict(type='Grid', use_w=True, use_h=True), #Gridmask
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
         # img_scale=(1333, 800),
-        img_scale=[(2000, 1400), (2000, 1800)],
+        img_scale=[(2000, 1400), (2000, 1600), (2000, 1800)],  #test multi-scale
         flip=True,
         transforms=[
             dict(type='Resize', keep_ratio=True),
             dict(type='RandomFlip'),
+            # dict(type='BBoxJitter', min=0.95, max=1.05),
             dict(type='Normalize', **img_norm_cfg),
             dict(type='Pad', size_divisor=32),
             dict(type='ImageToTensor', keys=['img']),

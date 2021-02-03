@@ -1891,3 +1891,75 @@ class BBoxJitter(object):
     def __repr__(self):
         return self.__class__.__name__ + '(bbox_jitter={}-{})'.format(
             self.min_scale, self.max_scale)
+
+
+@PIPELINES.register_module()
+class Grid(object):
+    def __init__(self, use_h, use_w, rotate=1, offset=False, ratio=0.5, mode=1, prob=0.7):
+        self.use_h = use_h
+        self.use_w = use_w
+        self.rotate = rotate
+        self.offset = offset
+        self.ratio = ratio
+        self.mode = mode
+        self.st_prob = prob
+        self.prob = prob
+
+    def __call__(self, results):
+        img = results['img']
+        if np.random.rand() > self.prob:
+            return results
+        h = img.shape[0]
+        w = img.shape[1]
+        self.d1 = 2
+        self.d2 = min(h, w)
+        hh = int(1.5 * h)
+        ww = int(1.5 * w)
+        d = np.random.randint(self.d1, self.d2)
+        # d = self.d
+        #        self.l = int(d*self.ratio+0.5)
+        if self.ratio == 1:
+            self.l = np.random.randint(1, d)
+        else:
+            self.l = min(max(int(d * self.ratio + 0.5), 1), d - 1)
+        mask = np.ones((hh, ww), np.float32)
+        st_h = np.random.randint(d)
+        st_w = np.random.randint(d)
+        if self.use_h:
+            for i in range(hh // d):
+                s = d * i + st_h
+                t = min(s + self.l, hh)
+                mask[s:t, :] *= 0
+        if self.use_w:
+            for i in range(ww // d):
+                s = d * i + st_w
+                t = min(s + self.l, ww)
+                mask[:, s:t] *= 0
+
+        r = np.random.randint(self.rotate)
+        mask = Image.fromarray(np.uint8(mask))
+        mask = mask.rotate(r)
+        mask = np.asarray(mask)
+        #        mask = 1*(np.random.randint(0,3,[hh,ww])>0)
+        mask = mask[(hh - h) // 2:(hh - h) // 2 + h, (ww - w) // 2:(ww - w) // 2 + w]
+
+        mask = mask.astype(np.float32)
+        if self.mode == 1:
+            mask = 1 - mask
+
+        # mask = mask.expand_as(img)
+        mask = np.expand_dims(mask, 2).repeat(3, axis=2)
+        if self.offset:
+            offset = 2 * (np.random.rand(h, w) - 0.5)
+            offset = (1 - mask) * offset
+            img = img * mask + offset
+        else:
+            img = img * mask
+        results['img'] = img
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += '(use_h={}, use_w={}, rotate={}, offset={}, ratio={}, mode={}, prob={})'.format(
+            self.use_h, self.use_w, self.rotate, self.offset, self.ratio, self.mode, self.prob)
+        return repr_str
