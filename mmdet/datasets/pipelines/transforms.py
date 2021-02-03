@@ -1802,3 +1802,92 @@ class CutOut(object):
                      else f'cutout_shape={self.candidates}, ')
         repr_str += f'fill_in={self.fill_in})'
         return repr_str
+
+
+@PIPELINES.register_module()
+class MixUp(object):
+    def __init__(self, p=0.3, lambd=0.5):
+        self.lambd = lambd
+        self.p = p
+        self.img2 = None
+        self.boxes2 = None
+        self.labels2 = None
+
+    def __call__(self, results):
+        img1, boxes1, labels1 = [
+            results[k] for k in ('img', 'gt_bboxes', 'gt_labels')
+        ]
+        if random.random() < self.p and self.img2 is not None and img1.shape[1] == self.img2.shape[1]:
+
+            height = max(img1.shape[0], self.img2.shape[0])
+            width = max(img1.shape[1], self.img2.shape[1])
+            mixup_image = np.zeros([height, width, 3], dtype='float32')
+            mixup_image[:img1.shape[0], :img1.shape[1], :] = img1.astype('float32') * self.lambd
+            mixup_image[:self.img2.shape[0], :self.img2.shape[1], :] += self.img2.astype('float32') * (1. - self.lambd)
+            mixup_image = mixup_image.astype('uint8')
+            mixup_boxes = np.vstack((boxes1, self.boxes2))
+            mixup_label = np.hstack((labels1, self.labels2))
+            results['img'] = mixup_image
+            results['gt_bboxes'] = mixup_boxes
+            results['gt_labels'] = mixup_label
+        else:
+            pass
+        self.img2 = img1
+        self.boxes2 = boxes1
+        self.labels2 = labels1
+        return results
+
+
+@PIPELINES.register_module()
+class BBoxJitter(object):
+    """
+    bbox jitter
+    Args:
+        min (int, optional): min scale
+        max (int, optional): max scale
+        ## origin w scale
+    """
+
+    def __init__(self, min=0, max=2):
+        self.min_scale = min
+        self.max_scale = max
+        self.count = 0
+
+    def bbox_jitter(self, bboxes, img_shape):
+        """Flip bboxes horizontally.
+        Args:
+            bboxes(ndarray): shape (..., 4*k)
+            img_shape(tuple): (height, width)
+        """
+        assert bboxes.shape[-1] % 4 == 0
+        if len(bboxes) == 0:
+            return bboxes
+        jitter_bboxes = []
+        for box in bboxes:
+            w = box[2] - box[0]
+            h = box[3] - box[1]
+            center_x = (box[0] + box[2]) / 2
+            center_y = (box[1] + box[3]) / 2
+            scale = np.random.uniform(self.min_scale, self.max_scale)
+            w = w * scale / 2.
+            h = h * scale / 2.
+            xmin = center_x - w
+            ymin = center_y - h
+            xmax = center_x + w
+            ymax = center_y + h
+            box2 = np.array([xmin, ymin, xmax, ymax], dtype=np.float32)
+            jitter_bboxes.append(box2)
+        jitter_bboxes = np.array(jitter_bboxes, dtype=np.float32)
+        jitter_bboxes[:, 0::2] = np.clip(jitter_bboxes[:, 0::2], 0, img_shape[1] - 1)
+        jitter_bboxes[:, 1::2] = np.clip(jitter_bboxes[:, 1::2], 0, img_shape[0] - 1)
+        return jitter_bboxes
+
+    def __call__(self, results):
+        for key in results.get('bbox_fields', []):
+            results[key] = self.bbox_jitter(results[key],
+                                          results['img_shape'])
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(bbox_jitter={}-{})'.format(
+            self.min_scale, self.max_scale)

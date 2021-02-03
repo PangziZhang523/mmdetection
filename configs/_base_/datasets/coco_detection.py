@@ -12,6 +12,8 @@ train_pipeline = [
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
+    #dict(type='MixUp',p=0.5, lambd=0.5),
+    #dict(type='BBoxJitter', min=0.9, max=1.1),
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
