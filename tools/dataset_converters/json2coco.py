@@ -10,8 +10,8 @@ import json
 
 
 def tile_classes():
-    # return ['边异常', '角异常', '白色点瑕疵', '浅色块瑕疵', '深色点块瑕疵', '光圈瑕疵']
-    return ['1', '2', '3', '4', '5', '6']
+    # return ['边异常', '角异常', '白色点瑕疵', '浅色块瑕疵', '深色点块瑕疵', '光圈瑕疵', '记号笔', '划伤']
+    return ['1', '2', '3', '4', '5', '6', '7', '8']
 
 
 label_ids = {name: i + 1 for i, name in enumerate(tile_classes())}
@@ -87,11 +87,11 @@ def cvt_annotations(img_path, json_path, out_file):
 
 
 def main():
-    img_path = '/data/zhangguanghao/train_my_data/tile_round1_train_20201231/train/images/'
-    json_path = '/data/zhangguanghao/train_my_data/tile_round1_train_20201231/train_annos.json'
+    img_path = '/data/zhangguanghao/train_my_data/tile_round2_train_20210204/train_imgs/'
+    json_path = '/data/zhangguanghao/train_my_data/tile_round2_train_20210204//train_annos.json'
 
     print('processing {} ...'.format("xml format annotations"))
-    cvt_annotations(img_path, json_path, '/data/zhangguanghao/train_my_data/tile_round1_train_20201231/train/tile_coco_train.json')
+    cvt_annotations(img_path, json_path, '/data/zhangguanghao/train_my_data/tile_round2_train_20210204/tile_coco_train.json')
     print('Done!')
 
 
