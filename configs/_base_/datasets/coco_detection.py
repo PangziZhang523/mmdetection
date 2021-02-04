@@ -1,11 +1,11 @@
 dataset_type = 'CocoDataset'
-data_root = '/data/zhangguanghao/train_my_data/tile_round1_train_20201231/'
+data_root = '/data/zhangguanghao/train_my_data/tile_round2_train_20210204/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=[(2000, 1400), (2000, 1800)], keep_ratio=True), #single-scale
+    dict(type='Resize', img_scale=[(2200, 2000), (2200, 2200)], keep_ratio=True), #single-scale
     # dict(type='Resize', img_scale=[(2000, 1000),(2000,1800)], keep_ratio=True), #multi-scale
     # dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='RandomFlip', flip_ratio=[0.3, 0.5], direction=['horizontal', 'vertical']),
@@ -23,7 +23,7 @@ test_pipeline = [
     dict(
         type='MultiScaleFlipAug',
         # img_scale=(1333, 800),
-        img_scale=[(2000, 1400), (2000, 1600), (2000, 1800)],  #test multi-scale
+        img_scale=[(2200, 2000), (2200, 2100), (2200, 2200)],  #test multi-scale
         flip=True,
         transforms=[
             dict(type='Resize', keep_ratio=True),
@@ -40,8 +40,8 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'train/tile_coco_train.json',
-        img_prefix=data_root + 'train/images/',
+        ann_file=data_root + 'tile_coco_train.json',
+        img_prefix=data_root + 'train_imgs/',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,

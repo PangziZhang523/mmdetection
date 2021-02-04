@@ -88,7 +88,7 @@ def cvt_annotations(img_path, json_path, out_file):
 
 def main():
     img_path = '/data/zhangguanghao/train_my_data/tile_round2_train_20210204/train_imgs/'
-    json_path = '/data/zhangguanghao/train_my_data/tile_round2_train_20210204//train_annos.json'
+    json_path = '/data/zhangguanghao/train_my_data/tile_round2_train_20210204/train_annos.json'
 
     print('processing {} ...'.format("xml format annotations"))
     cvt_annotations(img_path, json_path, '/data/zhangguanghao/train_my_data/tile_round2_train_20210204/tile_coco_train.json')
