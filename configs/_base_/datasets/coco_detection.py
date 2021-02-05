@@ -1,28 +1,34 @@
 dataset_type = 'CocoDataset'
-data_root = '/data_raid5_21T/zgh/ZGh/yolo/tile_round1_train_20201231/'
+data_root = '/data/zhangguanghao/train_my_data/tile_round2_train_20210204/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=[(2400, 1800),(2400, 2200)], keep_ratio=True), #single-scale
+    dict(type='Resize', img_scale=[(2000, 1800), (2000, 2000)], keep_ratio=True), #single-scale
     # dict(type='Resize', img_scale=[(2000, 1000),(2000,1800)], keep_ratio=True), #multi-scale
-    dict(type='RandomFlip', flip_ratio=0.5),
+    # dict(type='RandomFlip', flip_ratio=0.5),
+    dict(type='RandomFlip', flip_ratio=[0.3, 0.5], direction=['horizontal', 'vertical']),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
+    #dict(type='MixUp',p=0.5, lambd=0.5),
+    #dict(type='BBoxJitter', min=0.9, max=1.1),
+    #dict(type='BBoxJitter', min=0.95, max=1.05),
+    #dict(type='Grid', use_w=True, use_h=True), #Gridmask
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
         # img_scale=(1333, 800),
-        img_scale=(2400, 200),
-        flip=False,
+        img_scale=[(2000, 1800), (2000, 1900), (2000, 2000)],  #test multi-scale
+        flip=True,
         transforms=[
             dict(type='Resize', keep_ratio=True),
             dict(type='RandomFlip'),
+            # dict(type='BBoxJitter', min=0.95, max=1.05),
             dict(type='Normalize', **img_norm_cfg),
             dict(type='Pad', size_divisor=32),
             dict(type='ImageToTensor', keys=['img']),
@@ -31,11 +37,11 @@ test_pipeline = [
 ]
 data = dict(
     samples_per_gpu=1,
-    workers_per_gpu=2,
+    workers_per_gpu=1,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'instances_train2017_coco.json',
-        img_prefix=data_root + 'train/images/',
+        ann_file=data_root + 'tile_coco_train.json',
+        img_prefix=data_root + 'train_imgs/',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
@@ -44,8 +50,7 @@ data = dict(
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'test_1_27.json',
-        # img_prefix=data_root + 'val2017/',
-        img_prefix='/data_raid5_21T/zgh/ZGh/yolo/tile_round1_testA_20201231/testA_imgs',
+        ann_file=data_root + 'val/tile_coco_val.json',
+        img_prefix=data_root + '/val/images',
         pipeline=test_pipeline))
 evaluation = dict(interval=1, metric='bbox')

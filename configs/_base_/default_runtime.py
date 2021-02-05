@@ -18,7 +18,7 @@ log_config = dict(
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 # load_from = None
-load_from = '/data_raid5_21T/zgh/ZGh/mmdetection/weights/num7/cascade_rcnn_r2_101_fpn_20e_coco_pretrained_weights_classes_7.pth'
+load_from = '/data/train_my/mmdetection/weights/num9/cascade_rcnn_r50_fpn_1x_coco_coco_pretrained_weights_classes_9.pth'
 resume_from = None
 workflow = [('train', 1)]
 # work_dir = '/data_raid5_21T/zgh/ZGh/work_dirs/cascade_r2_1'

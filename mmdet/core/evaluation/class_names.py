@@ -81,7 +81,7 @@ def coco_classes():
     #     'scissors', 'teddy_bear', 'hair_drier', 'toothbrush'
     # ]
     return [
-        "边异常", "角异常", "白色点瑕疵", "浅色块瑕疵", "深色点块瑕疵", "光圈瑕疵"
+        "边异常", "角异常", "白色点瑕疵", "浅色块瑕疵", "深色点块瑕疵", "光圈瑕疵", "记号笔", "划伤"
     ]
 
 def cityscapes_classes():

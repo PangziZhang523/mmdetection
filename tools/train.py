@@ -20,8 +20,8 @@ from mmdet.utils import collect_env, get_root_logger
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
-    parser.add_argument('config',default='/data_raid5_21T/zgh/ZGh/mmdetection/configs/res2net/cascade_rcnn_r2_101_fpn_20e_coco.py', help='train config file path')
-    parser.add_argument('--work-dir', default='/data_raid5_21T/zgh/ZGh/work_dirs/cascade_r2_3', help='the dir to save logs and models')
+    parser.add_argument('config',default='/data/train_my/mmdetection/configs/cascade_rcnn/cascade_rcnn_r50_fpn_1x_coco.py', help='train config file path')
+    parser.add_argument('--work-dir', default='/data/train_my/work_dirs/round2_cascade_rcnn_r50_fpn_1x_', help='the dir to save logs and models')
     parser.add_argument(
         '--resume-from', help='the checkpoint file to resume from')
     parser.add_argument(

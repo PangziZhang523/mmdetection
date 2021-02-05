@@ -43,7 +43,7 @@ class CocoDataset(CustomDataset):
     #            'mouse', 'remote', 'keyboard', 'cell phone', 'microwave',
     #            'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock',
     #            'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush')
-    CLASSES = ('0', '1', '2', '3', '4', '5')
+    CLASSES = ('1', '2', '3', '4', '5', '6', '7', '8')
       
 
     def load_annotations(self, ann_file):
@@ -215,23 +215,39 @@ class CocoDataset(CustomDataset):
                 json_results.append(data)
         return json_results
 
+    # def _det2json(self, results):
+    #     """Convert detection results to COCO json style."""
+    #     json_results = []
+    #     for idx in range(len(self)):
+    #         img_id = self.img_ids[idx]
+    #         result = results[idx]
+    #         for label in range(len(result)):
+    #             bboxes = result[label]
+    #             for i in range(bboxes.shape[0]):
+    #                 data = dict()
+    #                 data['image_id'] = img_id
+    #                 data['bbox'] = self.xyxy2xywh(bboxes[i])
+    #                 data['score'] = float(bboxes[i][4])
+    #                 data['category_id'] = self.cat_ids[label]
+    #                 json_results.append(data)
+    #     return json_results
     def _det2json(self, results):
-        """Convert detection results to COCO json style."""
+        """Convert bbox detection results to COCO json style."""
         json_results = []
         for idx in range(len(self)):
-            img_id = self.img_ids[idx]
+            # img_id = self.img_ids[idx]
+            img_filename = self.data_infos[idx]['filename']
             result = results[idx]
             for label in range(len(result)):
                 bboxes = result[label]
                 for i in range(bboxes.shape[0]):
                     data = dict()
-                    data['image_id'] = img_id
-                    data['bbox'] = self.xyxy2xywh(bboxes[i])
-                    data['score'] = float(bboxes[i][4])
-                    data['category_id'] = self.cat_ids[label]
+                    data['name'] = img_filename
+                    data['category'] = self.cat_ids[label]
+                    data['bbox'] = [round(bboxes[i][y], 6) for y in range(4)]    # [round(x, 3) for x in b]
+                    data['score'] = round(bboxes[i][4], 6)
                     json_results.append(data)
         return json_results
-
     def _segm2json(self, results):
         """Convert instance segmentation results to COCO json style."""
         bbox_json_results = []

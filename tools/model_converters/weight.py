@@ -5,7 +5,7 @@ import argparse
 
 '''
 python3 tools/data_process/weight.py --org_path \
- /data_raid5_21T/zgh/ZGh/mmdetection/weights/cascade_rcnn_r2_101_fpn_20e_coco-f4b7b7db.pth \
+ /data/train_my/mmdetection/weights/cascade_rcnn_r2_101_fpn_20e_coco-f4b7b7db.pth \
 --num_classes 7
 '''
 
@@ -58,7 +58,7 @@ def modify_cascade_rcnn(model_coco, num_classes):
 
 
 def main(args):
-    save_dir = "/data_raid5_21T/zgh/ZGh/mmdetection/weights/num%s/" % args.num_classes
+    save_dir = "/data/train_my/mmdetection/weights/num%s/" % args.num_classes
     mkdir(save_dir)
     pth_dir = args.org_path
     model_coco = torch.load(pth_dir)
@@ -66,15 +66,15 @@ def main(args):
     mode = base_name.split('_')
     if (mode[0] == 'faster') and (mode[1] == 'rcnn'):
         print('Current model is faster rcnn.')
-        print('Converting ...')
+        print('Converting to faster_rcnn...')
         modify_faster_rcnn(model_coco, args.num_classes)
     elif (mode[0] == 'cascade') and (mode[1] == 'rcnn') or (mode[0] == 'epoch') or (mode[0] == 'detectors'):
         print('Current model is cascade rcnn.')
-        print('Converting ...')
+        print('Converting to:', args.num_classes)
         modify_cascade_rcnn(model_coco, args.num_classes)
     else:
         print('Current model is cascade rcnn.')
-        print('Converting ...')
+        print('Converting to other_rcnn...')
         modify_other_rcnn(model_coco, args.num_classes)
     # save new model
     model_name = save_dir + base_name.replace(base_name.split('_')[-1], 'coco_pretrained_weights_classes_') + str(args.num_classes) + ".pth"

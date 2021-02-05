@@ -3,6 +3,7 @@ import inspect
 import mmcv
 import numpy as np
 from numpy import random
+from PIL import Image
 
 from mmdet.core import PolygonMasks
 from mmdet.core.evaluation.bbox_overlaps import bbox_overlaps
@@ -1801,4 +1802,291 @@ class CutOut(object):
         repr_str += (f'cutout_ratio={self.candidates}, ' if self.with_ratio
                      else f'cutout_shape={self.candidates}, ')
         repr_str += f'fill_in={self.fill_in})'
+        return repr_str
+
+
+@PIPELINES.register_module()
+class MixUp(object):
+    def __init__(self, p=0.3, lambd=0.5):
+        self.lambd = lambd
+        self.p = p
+        self.img2 = None
+        self.boxes2 = None
+        self.labels2 = None
+
+    def __call__(self, results):
+        img1, boxes1, labels1 = [
+            results[k] for k in ('img', 'gt_bboxes', 'gt_labels')
+        ]
+        if random.random() < self.p and self.img2 is not None and img1.shape[1] == self.img2.shape[1]:
+
+            height = max(img1.shape[0], self.img2.shape[0])
+            width = max(img1.shape[1], self.img2.shape[1])
+            mixup_image = np.zeros([height, width, 3], dtype='float32')
+            mixup_image[:img1.shape[0], :img1.shape[1], :] = img1.astype('float32') * self.lambd
+            mixup_image[:self.img2.shape[0], :self.img2.shape[1], :] += self.img2.astype('float32') * (1. - self.lambd)
+            mixup_image = mixup_image.astype('uint8')
+            mixup_boxes = np.vstack((boxes1, self.boxes2))
+            mixup_label = np.hstack((labels1, self.labels2))
+            results['img'] = mixup_image
+            results['gt_bboxes'] = mixup_boxes
+            results['gt_labels'] = mixup_label
+        else:
+            pass
+        self.img2 = img1
+        self.boxes2 = boxes1
+        self.labels2 = labels1
+        return results
+
+
+@PIPELINES.register_module()
+class BBoxJitter(object):
+    """
+    bbox jitter
+    Args:
+        min (int, optional): min scale
+        max (int, optional): max scale
+        ## origin w scale
+    """
+
+    def __init__(self, min=0, max=2):
+        self.min_scale = min
+        self.max_scale = max
+        self.count = 0
+
+    def bbox_jitter(self, bboxes, img_shape):
+        """Flip bboxes horizontally.
+        Args:
+            bboxes(ndarray): shape (..., 4*k)
+            img_shape(tuple): (height, width)
+        """
+        assert bboxes.shape[-1] % 4 == 0
+        if len(bboxes) == 0:
+            return bboxes
+        jitter_bboxes = []
+        for box in bboxes:
+            w = box[2] - box[0]
+            h = box[3] - box[1]
+            center_x = (box[0] + box[2]) / 2
+            center_y = (box[1] + box[3]) / 2
+            scale = np.random.uniform(self.min_scale, self.max_scale)
+            w = w * scale / 2.
+            h = h * scale / 2.
+            xmin = center_x - w
+            ymin = center_y - h
+            xmax = center_x + w
+            ymax = center_y + h
+            box2 = np.array([xmin, ymin, xmax, ymax], dtype=np.float32)
+            jitter_bboxes.append(box2)
+        jitter_bboxes = np.array(jitter_bboxes, dtype=np.float32)
+        jitter_bboxes[:, 0::2] = np.clip(jitter_bboxes[:, 0::2], 0, img_shape[1] - 1)
+        jitter_bboxes[:, 1::2] = np.clip(jitter_bboxes[:, 1::2], 0, img_shape[0] - 1)
+        return jitter_bboxes
+
+    def __call__(self, results):
+        for key in results.get('bbox_fields', []):
+            results[key] = self.bbox_jitter(results[key],
+                                          results['img_shape'])
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(bbox_jitter={}-{})'.format(
+            self.min_scale, self.max_scale)
+
+
+@PIPELINES.register_module()
+class Grid(object):
+    def __init__(self, use_h, use_w, rotate=1, offset=False, ratio=0.5, mode=1, prob=0.7):
+        self.use_h = use_h
+        self.use_w = use_w
+        self.rotate = rotate
+        self.offset = offset
+        self.ratio = ratio
+        self.mode = mode
+        self.st_prob = prob
+        self.prob = prob
+
+    def __call__(self, results):
+        img = results['img']
+        if np.random.rand() > self.prob:
+            return results
+        h = img.shape[0]
+        w = img.shape[1]
+        self.d1 = 2
+        self.d2 = min(h, w)
+        hh = int(1.5 * h)
+        ww = int(1.5 * w)
+        d = np.random.randint(self.d1, self.d2)
+        # d = self.d
+        #        self.l = int(d*self.ratio+0.5)
+        if self.ratio == 1:
+            self.l = np.random.randint(1, d)
+        else:
+            self.l = min(max(int(d * self.ratio + 0.5), 1), d - 1)
+        mask = np.ones((hh, ww), np.float32)
+        st_h = np.random.randint(d)
+        st_w = np.random.randint(d)
+        if self.use_h:
+            for i in range(hh // d):
+                s = d * i + st_h
+                t = min(s + self.l, hh)
+                mask[s:t, :] *= 0
+        if self.use_w:
+            for i in range(ww // d):
+                s = d * i + st_w
+                t = min(s + self.l, ww)
+                mask[:, s:t] *= 0
+
+        r = np.random.randint(self.rotate)
+        mask = Image.fromarray(np.uint8(mask))
+        mask = mask.rotate(r)
+        mask = np.asarray(mask)
+        #        mask = 1*(np.random.randint(0,3,[hh,ww])>0)
+        mask = mask[(hh - h) // 2:(hh - h) // 2 + h, (ww - w) // 2:(ww - w) // 2 + w]
+
+        mask = mask.astype(np.float32)
+        if self.mode == 1:
+            mask = 1 - mask
+
+        # mask = mask.expand_as(img)
+        mask = np.expand_dims(mask, 2).repeat(3, axis=2)
+        if self.offset:
+            offset = 2 * (np.random.rand(h, w) - 0.5)
+            offset = (1 - mask) * offset
+            img = img * mask + offset
+        else:
+            img = img * mask
+        results['img'] = img
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += '(use_h={}, use_w={}, rotate={}, offset={}, ratio={}, mode={}, prob={})'.format(
+            self.use_h, self.use_w, self.rotate, self.offset, self.ratio, self.mode, self.prob)
+        return repr_str
+
+
+@PIPELINES.register_module()
+class SoftGridMask(object):
+    """SoftGridMask augmentation.
+    This augmentation is an extension of
+    `GridMask Data Augmentation <https://arxiv.org/abs/2001.04086>`_.
+    Unlike the hard (bool value) mask of the original GridMask,
+    various soft (float value) mask patterns can be specified by mask_pattern.
+    References:
+        https://github.com/Jia-Research-Lab/GridMask/blob/master/detection_grid/maskrcnn_benchmark/data/transforms/grid.py
+        https://github.com/albumentations-team/albumentations/blob/master/albumentations/augmentations/transforms.py
+    """
+
+    def __init__(self,
+                 ratio=0.5,
+                 ratio_h=None,
+                 ratio_w=None,
+                 unit_range=(2, 100000),
+                 unit_h_range=None,
+                 unit_w_range=None,
+                 mask_pattern=((1.0, 1.0), (1.0, 0.0)),
+                 mask_pattern_max=None,
+                 square_unit=True,
+                 prob=0.7):
+        assert (ratio is None) ^ (ratio_h is None)
+        assert (ratio is None) ^ (ratio_w is None)
+        if ratio:
+            ratio_h = ratio_w = ratio
+        assert 0.0 <= ratio_h <= 1.0
+        assert 0.0 <= ratio_w <= 1.0
+        self.ratio_h = ratio_h
+        self.ratio_w = ratio_w
+
+        assert (unit_range is None) ^ (unit_h_range is None)
+        assert (unit_range is None) ^ (unit_w_range is None)
+        if unit_range:
+            unit_h_range = unit_w_range = unit_range
+        assert isinstance(unit_h_range, tuple) and len(unit_h_range) == 2
+        assert isinstance(unit_w_range, tuple) and len(unit_w_range) == 2
+        self.unit_h_range = unit_h_range
+        self.unit_w_range = unit_w_range
+        self.unit_h_min, self.unit_h_max = unit_h_range
+        self.unit_w_min, self.unit_w_max = unit_w_range
+        assert 2 <= self.unit_h_min <= self.unit_h_max
+        assert 2 <= self.unit_w_min <= self.unit_w_max
+
+        mask_pattern = np.array(mask_pattern)
+        assert mask_pattern.shape == (2, 2), \
+            'Only 2x2 pattern is supported currently.'
+        if mask_pattern_max is not None:
+            mask_pattern_max = np.array(mask_pattern_max)
+            assert mask_pattern_max.shape == (2, 2), \
+                'Only 2x2 pattern is supported currently.'
+        self.mask_pattern = mask_pattern
+        self.mask_pattern_max = mask_pattern_max
+
+        assert 0.0 <= prob <= 1.0
+        self.square_unit = square_unit
+        self.prob = prob
+
+    # @imwrite_denormalized_debug_img
+    def __call__(self, results):
+        """Call function to perform SoftGridMask augmentation on images.
+        Args:
+            results (dict): Result dict from loading pipeline.
+        Returns:
+            dict: Result dict with grid-masked images.
+        """
+
+        if random.uniform(0, 1) > self.prob:
+            return results
+        if len(results.get('mask_fields', [])) > 0:
+            raise NotImplementedError
+
+        img_h, img_w = results['img'].shape[:2]
+        unit_h_max = min(img_h, img_w, self.unit_h_max)
+        unit_h = random.randint(self.unit_h_min, unit_h_max + 1)
+        if self.square_unit:
+            unit_w = unit_h
+        else:
+            unit_w_max = min(img_h, img_w, self.unit_w_max)
+            unit_w = random.randint(self.unit_w_min, unit_w_max + 1)
+        shift_y = random.randint(unit_h)
+        shift_x = random.randint(unit_w)
+
+        # calculate border position
+        # each grid should be at least 1 pixel
+        border_h = int(unit_h * self.ratio_h + 0.5)
+        border_w = int(unit_w * self.ratio_w + 0.5)
+        border_h = min(max(border_h, 1), unit_h - 1)
+        border_w = min(max(border_w, 1), unit_w - 1)
+
+        if self.mask_pattern_max is not None:
+            mask_pattern = random.uniform(self.mask_pattern,
+                                          self.mask_pattern_max)
+        else:
+            mask_pattern = self.mask_pattern
+
+        # prepare mask by tiling unit
+        unit_mask = np.ones((unit_h, unit_w), dtype=np.float32)
+        unit_mask[:border_h, :border_w] = mask_pattern[0, 0]
+        unit_mask[:border_h, border_w:] = mask_pattern[0, 1]
+        unit_mask[border_h:, :border_w] = mask_pattern[1, 0]
+        unit_mask[border_h:, border_w:] = mask_pattern[1, 1]
+        repeat_h = img_h // unit_h + 2  # +1 for ceil, +1 for shift
+        repeat_w = img_w // unit_w + 2  # +1 for ceil, +1 for shift
+        mask = np.tile(unit_mask, (repeat_h, repeat_w))
+
+        # crop mask with shift
+        mask = mask[shift_y:shift_y + img_h, shift_x:shift_x + img_w]
+
+        results['img'] *= mask[:, :, np.newaxis]
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(ratio_h={self.ratio_h}, '
+        repr_str += f'ratio_w={self.ratio_w}, '
+        repr_str += f'unit_h_range={self.unit_h_range}, '
+        repr_str += f'unit_w_range={self.unit_w_range}, '
+        repr_str += f'mask_pattern={self.mask_pattern}, '
+        repr_str += f'mask_pattern_max={self.mask_pattern_max}, '
+        repr_str += f'square_unit={self.square_unit}, '
+        repr_str += f'prob={self.prob})'
         return repr_str

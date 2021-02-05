@@ -7,4 +7,4 @@
  # @FilePath: /mmdetection/tools/train.sh
 ### 
 set -ex
-CUDA_VISIBLE_DEVICES=0,1,2,3 ./tools/train.py config/cascade_rcnn_r50_fpn_dconv_c3-c5_1x_coco.py  4 --no-validate
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 ./dist_train.sh ../configs/cascade_rcnn/cascade_rcnn_r50_fpn_1x_coco.py 8 --no-validate
