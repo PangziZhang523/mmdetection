@@ -5,7 +5,7 @@ img_norm_cfg = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=[(2200, 2000), (2200, 2200)], keep_ratio=True), #single-scale
+    dict(type='Resize', img_scale=[(2000, 1800), (2000, 2000)], keep_ratio=True), #single-scale
     # dict(type='Resize', img_scale=[(2000, 1000),(2000,1800)], keep_ratio=True), #multi-scale
     # dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='RandomFlip', flip_ratio=[0.3, 0.5], direction=['horizontal', 'vertical']),
@@ -23,7 +23,7 @@ test_pipeline = [
     dict(
         type='MultiScaleFlipAug',
         # img_scale=(1333, 800),
-        img_scale=[(2200, 2000), (2200, 2100), (2200, 2200)],  #test multi-scale
+        img_scale=[(2000, 1800), (2000, 1900), (2000, 2000)],  #test multi-scale
         flip=True,
         transforms=[
             dict(type='Resize', keep_ratio=True),
