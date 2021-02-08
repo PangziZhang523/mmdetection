@@ -1,3 +1,11 @@
+'''
+Author: your name
+Date: 2021-02-05 04:16:55
+LastEditTime: 2021-02-07 10:59:09
+LastEditors: your name
+Description: In User Settings Edit
+FilePath: /mmdetection/tools/model_converters/weight.py
+'''
 # 修改预训练权重类别数
 import os
 import torch
@@ -58,7 +66,7 @@ def modify_cascade_rcnn(model_coco, num_classes):
 
 
 def main(args):
-    save_dir = "/data/train_my/mmdetection/weights/num%s/" % args.num_classes
+    save_dir = "/data_raid5_21T/zgh/ZGh/mmdetection/weights/num%s/" % args.num_classes
     mkdir(save_dir)
     pth_dir = args.org_path
     model_coco = torch.load(pth_dir)

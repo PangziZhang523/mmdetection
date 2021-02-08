@@ -1,15 +1,18 @@
-# model settings
+# fp16 settings
+fp16 = dict(loss_scale=512.)
+
 model = dict(
     type='CascadeRCNN',
-    pretrained='torchvision://resnet50',
+    pretrained='open-mmlab://resnext101_64x4d',
     backbone=dict(
-        type='ResNet',
-        depth=50,
+        type='ResNeXt',
+        depth=101,
+        groups=64,
+        base_width=4,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=True),
-        norm_eval=True,
         style='pytorch'),
     neck=dict(
         type='FPN',
@@ -27,11 +30,12 @@ model = dict(
             strides=[4, 8, 16, 32, 64]),
         bbox_coder=dict(
             type='DeltaXYWHBBoxCoder',
-            target_means=[.0, .0, .0, .0],
+            target_means=[0.0, 0.0, 0.0, 0.0],
             target_stds=[1.0, 1.0, 1.0, 1.0]),
         loss_cls=dict(
             type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
-        loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0)),
+        loss_bbox=dict(
+            type='SmoothL1Loss', beta=0.1111111111111111, loss_weight=1.0)),
     roi_head=dict(
         type='CascadeRoIHead',
         num_stages=3,
@@ -50,7 +54,7 @@ model = dict(
                 num_classes=8,
                 bbox_coder=dict(
                     type='DeltaXYWHBBoxCoder',
-                    target_means=[0., 0., 0., 0.],
+                    target_means=[0.0, 0.0, 0.0, 0.0],
                     target_stds=[0.1, 0.1, 0.2, 0.2]),
                 reg_class_agnostic=True,
                 loss_cls=dict(
@@ -67,7 +71,7 @@ model = dict(
                 num_classes=8,
                 bbox_coder=dict(
                     type='DeltaXYWHBBoxCoder',
-                    target_means=[0., 0., 0., 0.],
+                    target_means=[0.0, 0.0, 0.0, 0.0],
                     target_stds=[0.05, 0.05, 0.1, 0.1]),
                 reg_class_agnostic=True,
                 loss_cls=dict(
@@ -84,7 +88,7 @@ model = dict(
                 num_classes=8,
                 bbox_coder=dict(
                     type='DeltaXYWHBBoxCoder',
-                    target_means=[0., 0., 0., 0.],
+                    target_means=[0.0, 0.0, 0.0, 0.0],
                     target_stds=[0.033, 0.033, 0.067, 0.067]),
                 reg_class_agnostic=True,
                 loss_cls=dict(
@@ -93,7 +97,6 @@ model = dict(
                     loss_weight=1.0),
                 loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0))
         ]),
-    # model training and testing settings
     train_cfg=dict(
         rpn=dict(
             assigner=dict(
@@ -178,7 +181,146 @@ model = dict(
             nms_thr=0.7,
             min_bbox_size=0),
         rcnn=dict(
-            # score_thr=0.05,
             score_thr=0.1,
             nms=dict(type='nms', iou_threshold=0.1),
             max_per_img=100)))
+dataset_type = 'CocoDataset'
+data_root = '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204/'
+img_norm_cfg = dict(
+    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+train_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations', with_bbox=True),
+    dict(
+        type='Resize', img_scale=[(2200, 2000), (2200, 2200)],
+        keep_ratio=True),
+    dict(
+        type='RandomFlip',
+        flip_ratio=[0.3, 0.5],
+        direction=['horizontal', 'vertical']),
+    dict(
+        type='Normalize',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        to_rgb=True),
+    dict(type='Pad', size_divisor=32),
+    dict(type='DefaultFormatBundle'),
+    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
+]
+test_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(
+        type='MultiScaleFlipAug',
+        img_scale=[(2200, 2000), (2200, 2100), (2200, 2200)],
+        flip=True,
+        transforms=[
+            dict(type='Resize', keep_ratio=True),
+            dict(type='RandomFlip'),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='Pad', size_divisor=32),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img'])
+        ])
+]
+data = dict(
+    samples_per_gpu=1,
+    workers_per_gpu=2,
+    train=dict(
+        type='CocoDataset',
+        ann_file=
+        '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204/tile_coco_train.json',
+        img_prefix=
+        '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204/train_imgs/',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='LoadAnnotations', with_bbox=True),
+            dict(
+                type='Resize',
+                img_scale=[(2200, 2000), (2200, 2200)],
+                keep_ratio=True),
+            dict(
+                type='RandomFlip',
+                flip_ratio=[0.3, 0.5],
+                direction=['horizontal', 'vertical']),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='Pad', size_divisor=32),
+            dict(type='DefaultFormatBundle'),
+            dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
+        ]),
+    val=dict(
+        type='CocoDataset',
+        ann_file=
+        '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204/annotations/instances_val2017.json',
+        img_prefix=
+        '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204/val2017/',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(
+                type='MultiScaleFlipAug',
+                img_scale=[(2200, 2000), (2200, 2100), (2200, 2200)],
+                flip=True,
+                transforms=[
+                    dict(type='Resize', keep_ratio=True),
+                    dict(type='RandomFlip'),
+                    dict(
+                        type='Normalize',
+                        mean=[123.675, 116.28, 103.53],
+                        std=[58.395, 57.12, 57.375],
+                        to_rgb=True),
+                    dict(type='Pad', size_divisor=32),
+                    dict(type='ImageToTensor', keys=['img']),
+                    dict(type='Collect', keys=['img'])
+                ])
+        ]),
+    test=dict(
+        type='CocoDataset',
+        ann_file=
+        '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204/val/tile_coco_val.json',
+        img_prefix=
+        '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204//val/images',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(
+                type='MultiScaleFlipAug',
+                img_scale=[(2200, 2000), (2200, 2100), (2200, 2200)],
+                flip=True,
+                transforms=[
+                    dict(type='Resize', keep_ratio=True),
+                    dict(type='RandomFlip'),
+                    dict(
+                        type='Normalize',
+                        mean=[123.675, 116.28, 103.53],
+                        std=[58.395, 57.12, 57.375],
+                        to_rgb=True),
+                    dict(type='Pad', size_divisor=32),
+                    dict(type='ImageToTensor', keys=['img']),
+                    dict(type='Collect', keys=['img'])
+                ])
+        ]))
+evaluation = dict(interval=1, metric='bbox')
+optimizer = dict(type='SGD', lr=0.005, momentum=0.9, weight_decay=0.0001)
+optimizer_config = dict(grad_clip=None)
+lr_config = dict(
+    policy='step',
+    warmup='linear',
+    warmup_iters=500,
+    warmup_ratio=0.001,
+    step=[16, 19])
+total_epochs = 20
+checkpoint_config = dict(interval=1)
+log_config = dict(interval=50, hooks=[dict(type='TextLoggerHook')])
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+load_from = '/data_raid5_21T/zgh/ZGh/mmdetection/weights/num9/cascade_rcnn_x101_64x4d_fpn_20e_coco_20200509_coco_pretrained_weights_classes_9.pth'
+resume_from = None
+workflow = [('train', 1)]
+work_dir = '/data_raid5_21T/zgh/ZGh/work_dirs/round2_cascade_rcnn__x101_64x4d'
+gpu_ids = range(0, 4)
