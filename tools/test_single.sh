@@ -8,5 +8,5 @@
 ### 
 set -ex
 python test.py ../configs/cascade_rcnn/cascade_rcnn_r50_fpn_1x_coco.py ../../work_dirs/cascade_rcnn_r50_fpn_1x_/latest.pth --format-only \
---options "jsonfile_prefix=./r50_test-dev_results"
+--options "jsonfile_prefix=./r50_coco_test"
 #results.pkl
