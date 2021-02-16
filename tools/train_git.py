@@ -20,8 +20,8 @@ from mmdet.utils import collect_env, get_root_logger
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
-    parser.add_argument('config',default='/data_raid5_21T/zgh/ZGh/mmdetection/config/cascade_rcnn_x101_64x4d_fpn_20e_grid.py', help='train config file path')
-    parser.add_argument('--work-dir', default='/data_raid5_21T/zgh/ZGh/work_dirs/round2_cascade_rcnn__x101_64x4d_grid', help='the dir to save logs and models')
+    parser.add_argument('config', help='train config file path')
+    parser.add_argument('--work-dir', help='the dir to save logs and models')
     parser.add_argument(
         '--resume-from', help='the checkpoint file to resume from')
     parser.add_argument(
@@ -31,13 +31,11 @@ def parse_args():
     group_gpus = parser.add_mutually_exclusive_group()
     group_gpus.add_argument(
         '--gpus',
-        # default=4,
         type=int,
         help='number of gpus to use '
         '(only applicable to non-distributed training)')
     group_gpus.add_argument(
         '--gpu-ids',
-        # default=range(0,4),
         type=int,
         nargs='+',
         help='ids of gpus to use '
@@ -158,9 +156,7 @@ def main():
     meta['exp_name'] = osp.basename(args.config)
 
     model = build_detector(
-        cfg.model,
-        train_cfg=cfg.get('train_cfg'),
-        test_cfg=cfg.get('test_cfg'))
+        cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
 
     datasets = [build_dataset(cfg.data.train)]
     if len(cfg.workflow) == 2:

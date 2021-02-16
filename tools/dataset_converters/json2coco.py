@@ -91,7 +91,7 @@ def main():
     json_path = '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204/train_annos.json'
 
     print('processing {} ...'.format("xml format annotations"))
-    cvt_annotations(img_path, json_path, '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204/tile_coco_train.json')
+    cvt_annotations(img_path, json_path, '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204/tile_coco_train_1.json')
     print('Done!')
 
 

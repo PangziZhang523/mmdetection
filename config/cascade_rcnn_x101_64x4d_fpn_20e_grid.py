@@ -199,6 +199,7 @@ train_pipeline = [
         flip_ratio=[0.3, 0.5],
         direction=['horizontal', 'vertical']),
     dict(type='BBoxJitter', min=0.95, max=1.05),
+    dict(type='Grid', use_w=True, use_h=True), #Gridmask
     dict(
         type='Normalize',
         mean=[123.675, 116.28, 103.53],
@@ -269,5 +270,5 @@ log_level = 'INFO'
 load_from = '/data_raid5_21T/zgh/ZGh/mmdetection/weights/num9/cascade_rcnn_x101_64x4d_fpn_20e_coco_20200509_coco_pretrained_weights_classes_9.pth'
 resume_from = None
 workflow = [('train', 1)]
-work_dir = '/data_raid5_21T/zgh/ZGh/work_dirs/round2_cascade_rcnn__x101_64x4d'
+work_dir = '/data_raid5_21T/zgh/ZGh/work_dirs/round2_cascade_rcnn__x101_64x4d_grid'
 gpu_ids = range(0, 4)
