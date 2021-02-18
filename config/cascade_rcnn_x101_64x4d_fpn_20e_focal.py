@@ -33,7 +33,8 @@ model = dict(
             target_means=[0.0, 0.0, 0.0, 0.0],
             target_stds=[1.0, 1.0, 1.0, 1.0]),
         loss_cls=dict(
-            type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
+            #type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
+            type='FocalLoss', use_sigmoid=True, gamma=2.0, alpha=0.25, loss_weight=1.0),
         loss_bbox=dict(
             type='SmoothL1Loss', beta=0.1111111111111111, loss_weight=1.0)),
     roi_head=dict(
@@ -58,9 +59,8 @@ model = dict(
                     target_stds=[0.1, 0.1, 0.2, 0.2]),
                 reg_class_agnostic=True,
                 loss_cls=dict(
-                    type='CrossEntropyLoss',
-                    use_sigmoid=False,
-                    loss_weight=1.0),
+                    #type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+                    type='FocalLoss', use_sigmoid=True, gamma=2.0, alpha=0.25, loss_weight=1.0),
                 loss_bbox=dict(type='SmoothL1Loss', beta=1.0,
                                loss_weight=1.0)),
             dict(
@@ -75,9 +75,8 @@ model = dict(
                     target_stds=[0.05, 0.05, 0.1, 0.1]),
                 reg_class_agnostic=True,
                 loss_cls=dict(
-                    type='CrossEntropyLoss',
-                    use_sigmoid=False,
-                    loss_weight=1.0),
+                    #type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+                    type='FocalLoss', use_sigmoid=True, gamma=2.0, alpha=0.25, loss_weight=1.0),
                 loss_bbox=dict(type='SmoothL1Loss', beta=1.0,
                                loss_weight=1.0)),
             dict(
@@ -92,9 +91,8 @@ model = dict(
                     target_stds=[0.033, 0.033, 0.067, 0.067]),
                 reg_class_agnostic=True,
                 loss_cls=dict(
-                    type='CrossEntropyLoss',
-                    use_sigmoid=False,
-                    loss_weight=1.0),
+                    #type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+                    type='FocalLoss', use_sigmoid=True, gamma=2.0, alpha=0.25, loss_weight=1.0),
                 loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0))
         ]),
     train_cfg=dict(
@@ -189,7 +187,7 @@ data_root = '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
-    dict(type='LoadImageFromFile', to_float32=True),
+    dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='Resize', img_scale=[(2200, 2000), (2200, 2200)],
@@ -199,7 +197,6 @@ train_pipeline = [
         flip_ratio=[0.3, 0.5],
         direction=['horizontal', 'vertical']),
     dict(type='BBoxJitter', min=0.95, max=1.05),
-    dict(type='SoftGridMask'), #SoftGridmask
     dict(
         type='Normalize',
         mean=[123.675, 116.28, 103.53],
@@ -210,7 +207,7 @@ train_pipeline = [
     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFile', to_float32=True),
+    dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
         #img_scale=[(2200, 2000), (2200, 2100), (2200, 2200)],
@@ -270,5 +267,5 @@ log_level = 'INFO'
 load_from = '/data_raid5_21T/zgh/ZGh/mmdetection/weights/num9/cascade_rcnn_x101_64x4d_fpn_20e_coco_20200509_coco_pretrained_weights_classes_9.pth'
 resume_from = None
 workflow = [('train', 1)]
-work_dir = '/data_raid5_21T/zgh/ZGh/work_dirs/round2_cascade_rcnn__x101_64x4d_softgrid'
+work_dir = '/data_raid5_21T/zgh/ZGh/work_dirs/round2_cascade_rcnn__x101_64x4d_focal'
 gpu_ids = range(0, 4)

@@ -13,7 +13,9 @@ model = dict(
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=True),
-        style='pytorch'),
+        style='pytorch',
+        dcn=dict(type='DCN', deform_groups=1, fallback_on_stride=False),
+        stage_with_dcn=(False, True, True, True)),
     neck=dict(
         type='FPN',
         in_channels=[256, 512, 1024, 2048],
@@ -189,7 +191,7 @@ data_root = '/data_raid5_21T/zgh/ZGh/round2_data/tile_round2_train_20210204/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
-    dict(type='LoadImageFromFile', to_float32=True),
+    dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='Resize', img_scale=[(2200, 2000), (2200, 2200)],
@@ -199,7 +201,6 @@ train_pipeline = [
         flip_ratio=[0.3, 0.5],
         direction=['horizontal', 'vertical']),
     dict(type='BBoxJitter', min=0.95, max=1.05),
-    dict(type='SoftGridMask'), #SoftGridmask
     dict(
         type='Normalize',
         mean=[123.675, 116.28, 103.53],
@@ -210,7 +211,7 @@ train_pipeline = [
     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFile', to_float32=True),
+    dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
         #img_scale=[(2200, 2000), (2200, 2100), (2200, 2200)],
@@ -270,5 +271,5 @@ log_level = 'INFO'
 load_from = '/data_raid5_21T/zgh/ZGh/mmdetection/weights/num9/cascade_rcnn_x101_64x4d_fpn_20e_coco_20200509_coco_pretrained_weights_classes_9.pth'
 resume_from = None
 workflow = [('train', 1)]
-work_dir = '/data_raid5_21T/zgh/ZGh/work_dirs/round2_cascade_rcnn__x101_64x4d_softgrid'
+work_dir = '/data_raid5_21T/zgh/ZGh/work_dirs/round2_cascade_rcnn__x101_64x4d_dcn'
 gpu_ids = range(0, 4)
